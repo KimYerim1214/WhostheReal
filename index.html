@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- 고쳐야 할 점 -->
+    <!-- 1. 동영상 재생 후 다음 페이지 넘어가도 소리가 안 끊김-->
+    <!-- 2. 뒤로 가기 버튼 만들기 -->
+    <!-- 3. 경각심을 가지게 만들기 예시: 이 모든 사진들은 딥페이크로 만들어진 사진입니다. -->  
+    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who's the real?</title>
+    <style>
+        @font-face {
+            font-family: 'GmarketSansTTFMedium'; /* 글씨체 이름 */
+            src: url('fonts/GmarketSansTTFMedium.ttf') format('truetype'); /* ttf 형식 */
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Amarillo'; /* 글씨체 이름 */
+            src: url('fonts/Amarillo.ttf') format('truetype'); /* ttf 형식 */
+            font-weight: normal;
+            font-style: normal;
+
+        }
+        body {
+            background-color: black;
+            font-family: 'GmarketSansTTFMedium', sans-serif;
+            font-size: 50px !important;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        .question {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .second-font {
+            font-family: 'Amarillo', sans-serif; /* 원하는 폰트로 변경 */
+            font-size: 40px; /* 원하는 크기로 변경 */
+            color: white; /* 색상 변경 */
+        }        
+        .grid {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 그리드 셀에 맞게 이미지를 채움 */
+        }
+        .grid img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 이미지가 셀에 맞추면서 잘리지 않음 */
+        }        
+        .container {
+            max-width: 50%; /* 전체 컨테이너 크기를 70%로 줄임 */
+            margin: 0 auto;
+        }
+        .grid-2x2 {
+            display: grid;
+            grid-template-columns: repeat(2, 400px);
+            grid-template-columns: repeat(2, 400px);
+            column-gap: 10px; /* 열 간의 간격 */
+            row-gap: 10px; /* 행 간의 간격 */
+            justify-content: center;
+        }
+        .grid-4x4 {
+            display: grid;
+            grid-template-columns: repeat(2, 350px); /* 각 셀의 너비를 300px로 고정 */
+            grid-template-rows: repeat(2, 350px); /* 각 셀의 높이를 300px로 고정 */
+            column-gap: 10px; /* 열 간의 간격 */
+            row-gap: 10px; /* 행 간의 간격 */
+            justify-content: center;
+        }       
+        .grid-4x4 img {
+            width: 100%; /* 이미지가 그리드 셀 크기에 맞게 100% 차지 */
+            height: 100%;
+            object-fit: cover; /* 이미지를 셀 크기에 맞춰 잘라냄 */
+        }               
+        .grid-3x3 {
+            display: grid;
+            grid-template-columns: repeat(3, 200px); /* 각 셀의 너비를 200px로 고정 */
+            grid-template-rows: repeat(3, 200px); /* 각 셀의 높이를 200px로 고정 */
+            column-gap: 10px; /* 열 간격을 10px로 설정 */
+            row-gap: 10px; /* 행 간격을 10px로 설정 */
+            justify-content: center;
+        }        
+        .grid-3x3 img {
+            width: 100%; /* 이미지가 그리드 셀 크기에 맞게 100%로 설정 */
+            height: 100%;
+            object-fit: cover; /* 이미지가 그리드 셀을 꽉 채우도록 설정 */
+        }
+        .image1 {
+            object-position: top; /* 이미지 상단 부분이 보이게 함 */
+        }        
+        .image2 {
+            object-position: 80%, 20%; /* 이미지 중앙 상단 부분이 보이도록 설정 */
+        }        
+        .image3 {
+            object-position: left; /* 이미지 왼쪽 부분이 보이게 함 */
+        }       
+        .image4 {
+            object-position: right; /* 이미지 오른쪽 부분이 보이게 함 */
+        }   
+        .image.selected {
+            transform: scale(0.9);
+        }
+        .next-btn {
+            padding: 10px 20px;
+            background-color: white;
+            color: black;
+            font-family: 'GmarketSansTTFMedium', sans-serif;
+            border: none;
+            cursor: pointer;
+        }
+        .video-container {
+            position: relative;
+            width: 100%; /* 동영상이 컨테이너의 전체 너비를 차지하게 설정 */
+            max-width: 640px; /* 동영상의 최대 너비를 설정 */
+            aspect-ratio: 16 / 9; /* 동영상의 가로세로 비율을 유지 */
+            margin: 0 auto; /* 동영상을 중앙에 정렬 */
+        }      
+        .video-container video {
+            width: 100%; /* 동영상 너비를 100%로 설정 */
+            height: 100%; /* 동영상 높이를 컨테이너에 맞춤 */
+            object-fit: contain; /* 동영상 비율이 유지되도록 설정 */
+        }        
+        .option-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .option-buttons button {
+            padding: 10px 20px;
+            background-color: white;
+            color: black;
+            border: none;
+            cursor: pointer;
+        }
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: repeat(1, 1fr);
+            }
+            .question {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 첫 번째 페이지 -->
+        <div class="page active" id="page1">
+            <div class="question second-font">Who's the Real?</div>
+            <button class="next-btn" onclick="goToPage(2)">다음</button>
+        </div>
+
+        <!-- 2 번째 페이지 (설명) -->
+        <div class="page" id="page2">
+            <div class="question">문제를 보고, 알맞은 정답을 골라주세요.<br>각 문제당 5점의 점수가 부과됩니다.<br>여러 개 선택할 수 있습니다.</div>
+            <button class="next-btn" onclick="goToPage(3)">다음</button>
+        </div>
+
+        <!-- 3 번째 페이지 (2개 이미지) -->
+        <div class="page" id="page3">
+            <div class="question">1. 두 사람 중 진짜 사람은 누구일까요?</div>
+            <div class="grid grid-2x2">
+                <img class="image" src="photo/R1_1.jpg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image" src="photo/R1_2.jpg" loading="lazy" onclick="toggleSelect(this)">
+            </div>
+            <button class="next-btn" onclick="goToPage(4)">다음</button>
+        </div>
+
+        <!-- 4 번째 페이지 (2개 이미지) -->
+        <div class="page" id="page4">
+            <div class="question">2. 두 사람 중 진짜 사람은 누구일까요?</div>
+            <div class="grid grid-2x2">
+                <img class="image" src="photo/R2_1.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image" src="photo/R2_2.jfif" loading="lazy" onclick="toggleSelect(this)">
+            </div>
+            <button class="next-btn" onclick="goToPage(5)">다음</button>
+        </div>
+
+        <!-- 5 번째 페이지 (2개 이미지) -->
+        <div class="page" id="page5">
+            <div class="question">3. 두 사람 중 진짜 사람은 누구일까요?</div>
+            <div class="grid grid-2x2">
+                <img class="image image1" src="photo/R3_1.jpeg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R3_2.jpeg" loading="lazy" onclick="toggleSelect(this)">
+            </div>
+            <button class="next-btn" onclick="goToPage(6)">다음</button>
+        </div>
+
+        <!-- 6 번째 페이지 (4개 이미지) -->
+        <div class="page" id="page6">
+            <div class="question">4. 다음 중 어느 것이<br>진짜 사람의 사진일까요?</div>
+            <div class="grid grid-4x4">
+                <img class="image image2" src="photo/R4_1.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image2" src="photo/R4_2.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image2" src="photo/R4_3.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image2" src="photo/R4_4.jfif" loading="lazy" onclick="toggleSelect(this)">
+            </div>
+            <button class="next-btn" onclick="goToPage(7)">다음</button>
+        </div>
+
+        <!-- 7 번째 페이지 (4개 이미지) -->
+        <div class="page" id="page7">
+            <div class="question">5. 다음 중 어느 것이<br>진짜 사람의 사진일까요?</div>
+            <div class="grid grid-4x4">
+                <img class="image image1" src="photo/R5_1.jpeg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R5_2.jpeg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R5_3.jpeg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R5_4.jpg" loading="lazy" onclick="toggleSelect(this)">
+            </div>
+            <button class="next-btn" onclick="goToPage(8)">다음</button>
+        </div>
+
+        <!-- 8 번째 페이지 (4개 이미지) -->
+        <div class="page" id="page8">
+            <div class="question">6. 다음 중 어느 것이<br>진짜 사람의 사진일까요?</div>
+            <div class="grid grid-4x4">
+                <img class="image image1" src="photo/R6_1.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R6_2.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R6_3.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R6_4.jfif" loading="lazy" onclick="toggleSelect(this)">
+            </div>
+            <button class="next-btn" onclick="goToPage(9)">다음</button>
+        </div>
+
+        <!-- 9 번째 페이지 (9개 이미지) -->
+        <div class="page" id="page9">
+            <div class="question">7. 다음 중 어느 것이<br>진짜 사람의 사진일까요?</div>
+            <div class="grid grid-3x3">
+                <img class="image image1" src="photo/R8_1.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R8_2.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R8_3.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R8_4.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R8_5.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R8_6.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R8_7.jfif" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R8_8.jpg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image image1" src="photo/R8_9.jfif" loading="lazy" onclick="toggleSelect(this)">
+            </div>
+            <button class="next-btn" onclick="goToPage(10)">다음</button>
+        </div>
+
+        <!-- 10 번째 페이지 (9개 이미지) -->
+        <div class="page" id="page10">
+            <div class="question">8. 다음 중 어느 것이<br>진짜 사람의 사진일까요?</div>
+            <div class="grid grid-3x3">
+                <img class="image" src="photo/R7_1.jpg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image" src="photo/R7_2.jpg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image" src="photo/R7_3.jpg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image" src="photo/R7_4.jpg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image" src="photo/R7_5.jpg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image" src="photo/R7_6.jpg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image" src="photo/R7_7.jpg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image" src="photo/R7_8.jpg" loading="lazy" onclick="toggleSelect(this)">
+                <img class="image" src="photo/R7_9.jpg" loading="lazy" onclick="toggleSelect(this)">
+            </div>
+            <button class="next-btn" onclick="goToPage(11)">다음</button>
+        </div>
+
+        <!-- 11 번째 페이지 (동영상과 2지선다형 질문 합침) -->
+        <div class="page" id="page11">
+            <div class="question">9. 이 동영상 속 주인공이<br>실제 사람일까요?</div>
+            <div class="video-container">
+                <video controls>
+                    <source src="video/video_1.mp4" type="video/mp4">
+                    브라우저가 동영상을 지원하지 않습니다.
+                </video>
+            </div>
+            <div class="option-buttons">
+                <button onclick="goToPage(12)">O</button>
+                <button onclick="goToPage(12)">X</button>
+            </div>
+        </div>
+
+        <!-- 12 번째 페이지-->
+        <div class="page" id="page12">
+            <div class="question">10. 이 동영상 속 주인공이<br>실제 사람일까요?</div>
+            <div class="video-container">
+                <video controls>
+                    <source src="video/video_2.mp4" type="video/mp4">
+                    브라우저가 동영상을 지원하지 않습니다.
+                </video>
+            </div>
+            <div class="option-buttons">
+                <button onclick="goToPage(13)">O</button>
+                <button onclick="goToPage(13)">X</button>
+            </div>
+        </div>
+
+        <!-- 13번째 페이지 -->
+        <div class="page" id="page13">
+            <div class="question">11. 이 동영상 속 주인공이<br>실제 사람일까요?</div>
+            <div class="video-container">
+                <video controls>
+                    <source src="video/video_3.mp4" type="video/mp4">
+                    브라우저가 동영상을 지원하지 않습니다.
+                </video>
+            </div>
+            <div class="option-buttons">
+                <button onclick="goToPage(14)">O</button>
+                <button onclick="goToPage(14)">X</button>
+            </div>
+        </div>
+
+        <!-- 14 번째 페이지 (점수 계산 페이지)-->
+        <div class="page" id="page14">
+            <div class="question">당신의 점수를 계산 중.</div>
+        </div>
+
+        <!-- 15 번째 페이지 (점수 계산 페이지)-->
+        <div class="page" id="page15">
+            <div class="question">당신의 점수를 계산 중..</div>
+        </div>
+
+        <!-- 16 번째 페이지 (점수 계산 페이지)-->
+        <div class="page" id="page16">
+            <div class="question">당신의 점수를 계산 중...</div>
+        </div>
+
+        <!-- 결과 17 페이지 -->
+        <div class="page" id="page17">
+            <div class="question">당신의 점수는 0점입니다.<br><br>사실, 모든 사진과 영상 속 사람은<br>실제가 아니었습니다.</div>
+        </div>
+    
+
+        <!-- 18페이지, 경고 페이지-->
+        <div class="page" id="page18">
+            <div class="question">이 모든 사진은 딥페이크로<br>만들어진 사진입니다.<br><br>당신은 얼마나 맞췄다고 생각하셨나요?</div>
+        </div>
+
+        <!-- 마지막 19페이지, 경고 페이지-->
+        <div class="page" id="page19">
+            <div class="question">당신의 눈은 진짜와 가짜를 <br>잘 구별하셨나요?</div>
+        </div>
+
+        <div class="page" id="page20">
+            <div class="question second-font">Who was the real?</div>
+        </div>
+
+        <div class="page" id="page21">
+            <div class="question">Project by 김예림, 김현진, 박소현</div>
+        </div>
+    
+    </div>
+
+
+    <script>
+        // 페이지 이동 함수
+        function toggleSelect(element) {
+            element.classList.toggle('selected');
+        }
+        function goToPage(pageNumber) {
+            // 현재 페이지의 동영상을 멈추는 코드
+            const videos = document.querySelectorAll('.page.active video');
+            videos.forEach(video => {
+                video.pause();  // 동영상 일시 정지
+                video.currentTime = 0;  // 동영상 시간을 처음으로 돌림
+            });
+        
+            const currentPage = document.querySelector('.page.active');
+            currentPage.classList.remove('active');
+            document.getElementById(`page${pageNumber}`).classList.add('active');
+        
+            if (pageNumber === 14) {
+                setTimeout(() => {
+                    goToPage(15);
+                }, 1000);  // 1초(1000ms) 후 15번째 페이지로 이동
+            }
+            if (pageNumber === 15) {
+                setTimeout(() => {
+                    goToPage(16);
+                }, 1000);  // 1초(1000ms) 후 16번째 페이지로 이동
+            }
+            if (pageNumber === 16) {
+                setTimeout(() => {
+                    goToPage(17);
+                }, 3000);  // 3초(2000ms) 후 17번째 페이지로 이동
+            }
+            if (pageNumber === 17) {
+                setTimeout(() => {
+                    goToPage(18);
+                }, 3000);  // 3초(1000ms) 후 18번째 페이지로 이동
+            }
+            if (pageNumber === 18) {
+                setTimeout(() => {
+                    goToPage(19);
+                }, 3000);  // 3초(1000ms) 후 18번째 페이지로 이동
+            }
+
+            if (pageNumber === 19) {
+                setTimeout(() => {
+                    goToPage(20);
+                }, 3000);  // 3초(1000ms) 후 18번째 페이지로 이동
+            }
+
+            if (pageNumber === 20) {
+                setTimeout(() => {
+                    goToPage(21);
+                }, 3000);  // 3초(1000ms) 후 18번째 페이지로 이동
+            }
+        }
+        
+    </script>
+</body>
+</html>
